@@ -1,0 +1,10 @@
+QIPS EXTRAS
+
+collection of scripts or binaries that can easily be run by qips-node-amqp and will adhere to the qips specs for reporting errors and output files, etc.
+
+WARNING:  run_template.rb file is the only file up to date with the specs.   
+
+this is a work in progress.
+
+
+
