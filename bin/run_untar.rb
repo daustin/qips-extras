@@ -3,9 +3,11 @@
 #########################################
 ##
 #    David Austin @ UPENN
-#    wrapper for msconvert
-#    converts mzML or mzXML to mgf based on the folling args:
+#    Simple example untars each input file and adds their contents to output 
+#    then passes relevent info back to node daemon
 #    --input_files='file1,file2'
+#   
+#    This can be modified to fit most needs. 
 #
 
 require 'rubygems'
@@ -13,7 +15,7 @@ require 'optparse'
 require 'json' 
 
 #command to execute
-CMD = '/opt/pwiz/msconvert --mgf'
+CMD = 'tar -xvf'
 
 #holder for stdout from exec
 out = ''
@@ -25,7 +27,7 @@ outputs = Array.new
 options = {}
 
 OptionParser.new do |opts|
-  opts.banner = "Usage: run_msconvert.rb [options]"
+  opts.banner = "Usage: run_untar.rb [options]"
   
   opts.on("--input_files=MANDATORY", "--input_fies MANDATORY", "Input Files") do |v|
     options[:input_files] = v
@@ -49,13 +51,11 @@ begin
   options[:input_files].split(',').each do |f|
     #each basename
     
-    out += "Converting #{f}...\n"
-    out += `#{CMD} #{f} 2> temp.err` #redirects error
-    
-    temp = f.chomp(File.extname(f))
-    temp += ".mgf"
-    outputs << "#{temp}"
-
+    out += "Unpacking #{f}...\n"
+    out += `#{CMD} #{f} 2> temp.err` #redirects to output file, and redirects error
+    out.each_line do |l|
+      outputs << "#{l.strip}"
+    end
     error += "#{$?}: " + `cat temp.err` + "\n" unless $? == 0 # $? is a special var for error code of process
     # error = "FORCED ERROR" if rand(2) == 1 # uncomment to force an error half the time
 
@@ -78,5 +78,12 @@ h["output_files"] = outputs
 h["error"] = error unless error.empty?
 
 puts h.to_json
+
+
+
+
+
+
+
 
 

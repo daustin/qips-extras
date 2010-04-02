@@ -3,9 +3,10 @@
 #########################################
 ##
 #    David Austin @ UPENN
-#    wrapper for msconvert
-#    converts mzML or mzXML to mgf based on the folling args:
+#    Simple example tars input files
 #    --input_files='file1,file2'
+#   
+#    This can be modified to fit most needs. 
 #
 
 require 'rubygems'
@@ -13,7 +14,7 @@ require 'optparse'
 require 'json' 
 
 #command to execute
-CMD = '/opt/pwiz/msconvert --mgf'
+CMD = 'tar -cvf'
 
 #holder for stdout from exec
 out = ''
@@ -25,7 +26,7 @@ outputs = Array.new
 options = {}
 
 OptionParser.new do |opts|
-  opts.banner = "Usage: run_msconvert.rb [options]"
+  opts.banner = "Usage: run_tar.rb [options]"
   
   opts.on("--input_files=MANDATORY", "--input_fies MANDATORY", "Input Files") do |v|
     options[:input_files] = v
@@ -46,20 +47,16 @@ begin
   #   this way anything that goes wrong is caught and passed back to qips-node daemon
   #
 
-  options[:input_files].split(',').each do |f|
-    #each basename
-    
-    out += "Converting #{f}...\n"
-    out += `#{CMD} #{f} 2> temp.err` #redirects error
-    
-    temp = f.chomp(File.extname(f))
-    temp += ".mgf"
-    outputs << "#{temp}"
-
-    error += "#{$?}: " + `cat temp.err` + "\n" unless $? == 0 # $? is a special var for error code of process
-    # error = "FORCED ERROR" if rand(2) == 1 # uncomment to force an error half the time
-
-  end
+  #split and join input files with a space
+  
+  fnames = options[:input_files].split(',').join(' ')
+  stamp = Time.now.to_i
+  
+  out += "Tarring files...\n"
+  out += `#{CMD} archive_#{stamp}.tar #{fnames} 2> temp.err` #redirects redirects error
+  outputs << "archive_#{stamp}.tar"
+  error += "#{$?}: " + `cat temp.err` + "\n" unless $? == 0 # $? is a special var for error code of process
+  # error = "FORCED ERROR" if rand(2) == 1 # uncomment to force an error half the time
 
 rescue Exception => e
 
@@ -78,5 +75,12 @@ h["output_files"] = outputs
 h["error"] = error unless error.empty?
 
 puts h.to_json
+
+
+
+
+
+
+
 
 

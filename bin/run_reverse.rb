@@ -3,9 +3,11 @@
 #########################################
 ##
 #    David Austin @ UPENN
-#    wrapper for msconvert
-#    converts mzML or mzXML to mgf based on the folling args:
+#    Simple example loops through input files and reverses them
+#    then adds .rev to the end and passes relevent info back to node daemon
 #    --input_files='file1,file2'
+#   
+#    This can be modified to fit most needs. 
 #
 
 require 'rubygems'
@@ -13,7 +15,7 @@ require 'optparse'
 require 'json' 
 
 #command to execute
-CMD = '/opt/pwiz/msconvert --mgf'
+CMD = 'rev'
 
 #holder for stdout from exec
 out = ''
@@ -25,7 +27,7 @@ outputs = Array.new
 options = {}
 
 OptionParser.new do |opts|
-  opts.banner = "Usage: run_msconvert.rb [options]"
+  opts.banner = "Usage: run_reverse.rb [options]"
   
   opts.on("--input_files=MANDATORY", "--input_fies MANDATORY", "Input Files") do |v|
     options[:input_files] = v
@@ -49,13 +51,9 @@ begin
   options[:input_files].split(',').each do |f|
     #each basename
     
-    out += "Converting #{f}...\n"
-    out += `#{CMD} #{f} 2> temp.err` #redirects error
-    
-    temp = f.chomp(File.extname(f))
-    temp += ".mgf"
-    outputs << "#{temp}"
-
+    out += "Processing #{f}...\n"
+    out += `#{CMD} #{f} 1> #{f}.rev 2> temp.err` #redirects to output file, and redirects error
+    outputs << "#{f}.rev"
     error += "#{$?}: " + `cat temp.err` + "\n" unless $? == 0 # $? is a special var for error code of process
     # error = "FORCED ERROR" if rand(2) == 1 # uncomment to force an error half the time
 
@@ -78,5 +76,12 @@ h["output_files"] = outputs
 h["error"] = error unless error.empty?
 
 puts h.to_json
+
+
+
+
+
+
+
 
 

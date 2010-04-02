@@ -3,9 +3,11 @@
 #########################################
 ##
 #    David Austin @ UPENN
-#    wrapper for msconvert
-#    converts mzML or mzXML to mgf based on the folling args:
-#    --input_files='file1,file2'
+#    Simple example loops through input files and appends a phrase
+#    then adds .app to the end and passes relevent info back to node daemon
+#    --input_files='file1,file2'  --phrase='Is it Friday yet?'
+#   
+#    This can be modified to fit most needs. 
 #
 
 require 'rubygems'
@@ -13,7 +15,9 @@ require 'optparse'
 require 'json' 
 
 #command to execute
-CMD = '/opt/pwiz/msconvert --mgf'
+CMD = 'echo'
+
+default_phrase = 'Is is Friday yet?'
 
 #holder for stdout from exec
 out = ''
@@ -25,10 +29,14 @@ outputs = Array.new
 options = {}
 
 OptionParser.new do |opts|
-  opts.banner = "Usage: run_msconvert.rb [options]"
+  opts.banner = "Usage: run_append.rb [options]"
   
   opts.on("--input_files=MANDATORY", "--input_fies MANDATORY", "Input Files") do |v|
     options[:input_files] = v
+  end
+  
+  opts.on("--phrase=MANDATORY", "--phrase MANDATORY", "Phrase") do |v|
+    options[:phrase] = v
   end
   
 end.parse!
@@ -46,17 +54,16 @@ begin
   #   this way anything that goes wrong is caught and passed back to qips-node daemon
   #
 
+  phrase = options[:phrase] ||= default_phrase
+
   options[:input_files].split(',').each do |f|
     #each basename
     
-    out += "Converting #{f}...\n"
-    out += `#{CMD} #{f} 2> temp.err` #redirects error
-    
-    temp = f.chomp(File.extname(f))
-    temp += ".mgf"
-    outputs << "#{temp}"
-
-    error += "#{$?}: " + `cat temp.err` + "\n" unless $? == 0 # $? is a special var for error code of process
+    out += "Processing #{f}...\n"
+    out += `#{CMD} #{phrase} >> #{f}`
+    out +=  `mv #{f} #{f}.app`
+    outputs << "#{f}.app"
+    error += "error code: #{$?} \n" unless $? == 0 # $? is a special var for error code of process
     # error = "FORCED ERROR" if rand(2) == 1 # uncomment to force an error half the time
 
   end
@@ -78,5 +85,12 @@ h["output_files"] = outputs
 h["error"] = error unless error.empty?
 
 puts h.to_json
+
+
+
+
+
+
+
 
 
