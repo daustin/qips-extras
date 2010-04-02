@@ -63,7 +63,7 @@ begin
     out += `#{CMD} #{phrase} >> #{f}`
     out +=  `mv #{f} #{f}.app`
     outputs << "#{f}.app"
-    error += "error code: #{$?} \n" unless $? == 0 # $? is a special var for error code of process
+    error += "error code: #{$?} \n" unless $?.to_i == 0 # $? is a special var for error code of process
     # error = "FORCED ERROR" if rand(2) == 1 # uncomment to force an error half the time
 
   end

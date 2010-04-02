@@ -54,7 +54,7 @@ begin
     out += "Processing #{f}...\n"
     out += `#{CMD} #{f} 1> #{f}.rev 2> temp.err` #redirects to output file, and redirects error
     outputs << "#{f}.rev"
-    error += "#{$?}: " + `cat temp.err` + "\n" unless $? == 0 # $? is a special var for error code of process
+    error += "#{$?}: " + `cat temp.err` + "\n" unless $?.to_i == 0 # $? is a special var for error code of process
     # error = "FORCED ERROR" if rand(2) == 1 # uncomment to force an error half the time
 
   end

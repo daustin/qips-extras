@@ -52,11 +52,13 @@ begin
     #each basename
     
     out += "Unpacking #{f}...\n"
-    out += `#{CMD} #{f} 2> temp.err` #redirects to output file, and redirects error
-    out.each_line do |l|
-      outputs << "#{l.strip}"
+    temp = `#{CMD} #{f} 2> temp.err` #redirects to output file, and redirects error
+    temp.each_line do |l|
+      outputs << "#{l.strip}" unless l =~ /\._/
     end
-    error += "#{$?}: " + `cat temp.err` + "\n" unless $? == 0 # $? is a special var for error code of process
+    out += temp
+    
+    error += "#{$?}: " + `cat temp.err` + "\n" if File.exist?('temp.err') && $?.to_i > 0 # $? is a special var for error code of process
     # error = "FORCED ERROR" if rand(2) == 1 # uncomment to force an error half the time
 
   end
