@@ -15,32 +15,56 @@ require 'json'
 ################  HELPER CLASSES##############################
 
 class IonOptimizer
-  
-  
+
   def self.optimize(ion_array = [], algo = 'mascot')
-    
+
     case algo    
     when 'mascot'
       
-      #sort ions and take top 200
-      
-      ion_array.sort!{ |x,y| y.intensity.to_i <=> y.intensity.to_i}
-      
+      ion_array.sort!{ |x,y| y.intensity.to_f <=> x.intensity.to_f} #sort ions descreasing intensity and take top 200
       return ion_array[0..199]        
       
     when 'sequest'
      
-     #TOODOOO
-     return ion_array
+     #sort first
+     
+     topx = 6
+     window = 30
+     
+     optimized_array = Array.new
+     
+     while ! ion_array.empty?
+       
+       work_array = Array.new
+       
+       ion_array.sort!{ |x,y| y.intensity.to_f <=> x.intensity.to_f}
+       
+       #pick top hit
+       
+       top_ion = ion_array[0]
+       
+       #now look through and grab any mz's that are in range
+       
+       ion_array.each do |i|
+         
+         work_array << ion_array.delete(i) if (i.mz.to_f > (top_ion.mz.to_f - window)) || (i.mz.to_f < (top_ion.mz.to_f + window))
+          
+       end
+       
+       # now just sort and add topx to optimized_array
+       
+       work_array.sort!{ |x,y| y.intensity.to_f <=> x.intensity.to_f}
+       
+       optimized_array.concat(work_array[0..(topx-1)])
+       
+     end
+     
+     return optimized_array.sort!{ |x,y| x.mz.to_f <=> y.mz.to_f}
         
     else
       raise 'Invalid optimize algorithm.  choose sequest or mascot.'
-          
     end  
-    
-    
   end
-
   
 end
   
@@ -51,16 +75,13 @@ class MGFPrinter
   
     #now we print!
     mgfout = ''
-
     mgfout +=  "BEGIN IONS\n"
     mgfout +=  "TITLE=#{s.id}\n"
     mgfout +=  "RTINSECONDS=#{s.retention_time}\n"
     mgfout +=  "PEPMASS=#{s.precursor_mass} #{s.precursor_intensity}\n"
 
     0.upto(ions.length-1) do |i|
-
       mgfout +=  "#{sprintf('%0.7f', ions[i].mz)} #{sprintf('%0.5f', ions[i].intensity)}\n"
-
     end
 
     mgfout +=  "END IONS\n"
