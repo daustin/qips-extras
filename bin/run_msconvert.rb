@@ -27,7 +27,7 @@ options = {}
 OptionParser.new do |opts|
   opts.banner = "Usage: run_msconvert.rb [options]"
   
-  opts.on("--input_files=MANDATORY", "--input_fies MANDATORY", "Input Files") do |v|
+  opts.on("--input_files=MANDATORY", "--input_files MANDATORY", "Input Files") do |v|
     options[:input_files] = v
   end
   
