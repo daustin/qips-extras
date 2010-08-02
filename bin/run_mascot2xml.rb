@@ -55,6 +55,7 @@ begin
       out += "Running #{CMD} #{f} #{other_args.join(' ')}"
       out += `#{CMD} #{f} #{other_args.join(' ')} 2> temp.err` #redirects to output file, and redirects error
       outputs << "#{f.chomp('.dat')}.pep.xml"
+      outputs << "#{f.chomp('.dat')}.tgz"
       error += "#{$?}: " + `cat temp.err` + "\n" unless $?.to_i == 0 # $? is a special var for error code of process
     
     end

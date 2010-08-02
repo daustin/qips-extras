@@ -24,8 +24,8 @@ MGF_CMD = '/opt/pwiz/msconvert --mgf'
 HOST = 'bioinf.itmat.upenn.int'
 PATH = '/mascot/cgi/nph-mascot.exe?1'
 STRFORMAT = "%Y-%m-%d %H:%M"
-DAT_HOST = 'daustin@mustard'
-DAT_PATH = '/lims/data_files'
+DAT_HOST = 'daustin@chutney'
+DAT_PATH = '/mascot/data'
 
 #holder for stdout from exec
 out = ''
@@ -155,7 +155,7 @@ begin
     # out html from mascot server
     mascotout = File.open("MASCOT_#{File.basename(infile,'.mgf')}.html", "w+")
 
-    out += "Sending #{infile} to mascot server"
+    out += "Sending #{infile} to mascot server\n"
     
     #construct multipart
     data = File.open(infile).read
