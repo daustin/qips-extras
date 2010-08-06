@@ -12,20 +12,14 @@
 require 'rubygems'
 require 'optparse'
 require 'json'
-require 'date'
-require 'CGI'
-require 'net/http'
-require 'net/https'
+require 'curb'
 
 #mgf command to execute if necessary
 MGF_CMD = '/opt/pwiz/msconvert --mgf'
 
 # some statics
-HOST = 'bioinf.itmat.upenn.int'
-PATH = '/mascot/cgi/nph-mascot.exe?1'
-STRFORMAT = "%Y-%m-%d %H:%M"
-DAT_HOST = 'daustin@chutney'
-DAT_PATH = '/mascot/data'
+SEARCH_URL = 'http://bioinf.itmat.upenn.edu/mascot/cgi/nph-mascot.exe'
+DAT_URL = 'http://bioinf.itmat.upenn.edu/mascot/x-cgi/ms-status.exe?Autorefresh=false&Show=RESULTFILE'
 
 #holder for stdout from exec
 out = ''
@@ -49,21 +43,6 @@ OptionParser.new do |opts|
    end
   
 end.parse!
-
-## HELPER HTTP METHODS FOR FILE SUBMISSION
-def text_to_multipart(key,value)
-  return "Content-Disposition: form-data; name=\"#{CGI::escape(key)}\"\r\n" + 
-    "\r\n" + 
-    "#{value}\r\n"
-end
-
-def file_to_multipart(key,filename,mime_type,content)
- return "Content-Disposition: form-data; name=\"#{CGI::escape(key)}\"; filename=\"#{filename}\"\r\n" +
-    "Content-Transfer-Encoding: binary\r\n" +
-    "Content-Type: #{mime_type}\r\n" + 
-    "\r\n" + 
-    "#{content}\r\n"
-end
 
 # loop through each input file and run command
 # redirects error to error file and then captures error
@@ -156,45 +135,43 @@ begin
     mascotout = File.open("MASCOT_#{File.basename(infile,'.mgf')}.html", "w+")
 
     out += "Sending #{infile} to mascot server\n"
-    
-    #construct multipart
-    data = File.open(infile).read
-    httpparams = [file_to_multipart('FILE', infile,'text/plain', data)]
-
-    # add in params
+     
+    # prepare post data
+    post_data = []
     mascotparams.keys.each do |k|
-      httpparams.push(text_to_multipart(k,mascotparams[k]))
+      post_data << Curl::PostField.content(k, mascotparams[k])
     end
-    
-    # create boundary and send http request
-    boundary = '349832898984244898448024464570528145'
-    query = httpparams.collect {|p| '--' + boundary + "\r\n" + p}.join('') + "--" + boundary + "--\r\n"
-    http = Net::HTTP.new(HOST)
-    http.read_timeout = 300
-    response = http.start.post2(PATH,query,
-                                        "Content-type" => "multipart/form-data; boundary=" + boundary)
-    body = response.read_body
+    post_data << Curl::PostField.file('FILE', infile)
+
+    # post
+    c = Curl::Easy.new(SEARCH_URL)
+    c.multipart_form_post = true
+    c.http_post(post_data)
     
     #finally write body to output file to 
-    mascotout.write(body)
+    mascotout.write(c.body_str)
     mascotout.close
     outputs << "MASCOT_#{File.basename(infile,'.mgf')}.html"
     
     # now fetch dat file and rename to match infile
     
-    if body =~ /<A HREF.*?file=\.\.\/data\/(.+?\.dat)/ then
-
+    if body =~ /<A HREF.*?file=\.\.\/(.+?\.dat)/ then
+      
+      # get date dir and basename 
       dat_basename = File.basename($1)
-      out += "Fetching #{$1} from DAT repository and renaming\n"
-      out += `scp #{DAT_HOST}:#{DAT_PATH}/#{$1} .`
-      out += `mv -v #{dat_basename} #{File.basename(infile,'.mgf')}.dat`
+      pa = $1.split('/')
+      date_dir = pa[pa.length-2]
+
+      out += "Fetching #{$1} from mascot serverv and renaming\n"
+      out += `curl -O #{File.basename(infile,'.mgf')}.dat #{DAT_URL}&DateDir=#{date_dir}&ResJob=#{dat_basename}`
+      # out += `mv -v #{dat_basename} #{File.basename(infile,'.mgf')}.dat`
       outputs << "#{File.basename(infile,'.mgf')}.dat"
 
     else
 
       # can't get datfile so throw an error
       error += "ERROR:  Could not find a dat file in mascot search results for #{infile}\n\n"
-      error += "MASCOT OUT SOURCE: #{body}\n\n"
+      error += "MASCOT OUT SOURCE: #{c.body_str}\n\n"
 
     end
 
