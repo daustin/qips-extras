@@ -12,14 +12,17 @@
 require 'rubygems'
 require 'optparse'
 require 'json'
-require 'curb'
+require 'restclient'
 
 #mgf command to execute if necessary
 MGF_CMD = '/opt/pwiz/msconvert --mgf'
 
-# some statics
-SEARCH_URL = 'http://bioinf.itmat.upenn.edu/mascot/cgi/nph-mascot.exe'
-DAT_URL = 'http://bioinf.itmat.upenn.edu/mascot/x-cgi/ms-status.exe?Autorefresh=false&Show=RESULTFILE'
+# URLs 
+# SEARCH_URL = 'http://bioinf.itmat.upenn.edu/mascot/cgi/nph-mascot.exe?1'
+# DAT_URL = 'http://bioinf.itmat.upenn.edu/mascot/x-cgi/ms-status.exe?Autorefresh=false&Show=RESULTFILE'
+
+SEARCH_URL = 'http://www.matrixscience.com/cgi/nph-mascot.exe?1'
+DAT_URL = 'http://www.matrixscience.com/cgi/export_dat_2.pl'
 
 #holder for stdout from exec
 out = ''
@@ -86,7 +89,7 @@ begin
   # now prepare http header params from params files
 
   mascotparams = { 'INTERMEDIATE' => '',
-   'FORMVER' => '1.01',
+    'FORMVER' => '1.01',
     'SEARCH'=> 'MIS',
     'IATOL' => '0',
     'IASTOL' => '0',
@@ -135,27 +138,21 @@ begin
     mascotout = File.open("MASCOT_#{File.basename(infile,'.mgf')}.html", "w+")
 
     out += "Sending #{infile} to mascot server\n"
-     
-    # prepare post data
-    post_data = []
-    mascotparams.keys.each do |k|
-      post_data << Curl::PostField.content(k, mascotparams[k])
-    end
-    post_data << Curl::PostField.file('FILE', infile)
-
+    
+    mascotparams['FILE'] = File.new(infile)
+    
     # post
-    c = Curl::Easy.new(SEARCH_URL)
-    c.multipart_form_post = true
-    c.http_post(post_data)
+    body = ''
+    RestClient.post (SEARCH_URL, mascotparams) { |response| body = response.to_s }
     
     #finally write body to output file to 
-    mascotout.write(c.body_str)
+    mascotout.write(body)
     mascotout.close
     outputs << "MASCOT_#{File.basename(infile,'.mgf')}.html"
     
     # now fetch dat file and rename to match infile
     
-    if body =~ /<A HREF.*?file=\.\.\/(.+?\.dat)/ then
+    if body =~ /<A HREF.*?file=\.\.\/data\/(.+?\.dat)/ then
       
       # get date dir and basename 
       dat_basename = File.basename($1)
@@ -163,7 +160,20 @@ begin
       date_dir = pa[pa.length-2]
 
       out += "Fetching #{$1} from mascot serverv and renaming\n"
-      out += `curl -O #{File.basename(infile,'.mgf')}.dat #{DAT_URL}&DateDir=#{date_dir}&ResJob=#{dat_basename}`
+      
+      fetch_hash = { 'do_export' => '1',
+        'export_format' => 'MascotDAT',
+        'file'=> "../data/#{date_dir}/#{dat_basename}"
+      }
+      
+      RestClient.post(DAT_URL, fetch_hash) { |res|
+      
+        out += res.to_s
+        File.open("#{File.basename(infile,'.mgf')}.dat","w+") {|f| f.write res.to_s }
+        
+      }
+      
+      # out += `curl -O #{File.basename(infile,'.mgf')}.dat #{DAT_URL}&do_export=1&export_format=MascotDAT&file=../data/#{date_dir}/#{dat_basename} `
       # out += `mv -v #{dat_basename} #{File.basename(infile,'.mgf')}.dat`
       outputs << "#{File.basename(infile,'.mgf')}.dat"
 
@@ -171,7 +181,7 @@ begin
 
       # can't get datfile so throw an error
       error += "ERROR:  Could not find a dat file in mascot search results for #{infile}\n\n"
-      error += "MASCOT OUT SOURCE: #{c.body_str}\n\n"
+      error += "MASCOT OUT SOURCE: #{body}\n\n"
 
     end
 
