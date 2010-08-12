@@ -13,16 +13,18 @@ require 'rubygems'
 require 'optparse'
 require 'json'
 require 'restclient'
+require 'curb'
 
 #mgf command to execute if necessary
 MGF_CMD = '/opt/pwiz/msconvert --mgf'
 
 # URLs 
-# SEARCH_URL = 'http://bioinf.itmat.upenn.edu/mascot/cgi/nph-mascot.exe?1'
-# DAT_URL = 'http://bioinf.itmat.upenn.edu/mascot/x-cgi/ms-status.exe?Autorefresh=false&Show=RESULTFILE'
+ SEARCH_URL = 'http://bioinf.itmat.upenn.edu/mascot/cgi/nph-mascot.exe?1'
+ DAT_URL = 'http://bioinf.itmat.upenn.edu/mascot/x-cgi/ms-status.exe?Autorefresh=false&Show=RESULTFILE&BrowserSafe=false'
 
-SEARCH_URL = 'http://www.matrixscience.com/cgi/nph-mascot.exe?1'
-DAT_URL = 'http://www.matrixscience.com/cgi/export_dat_2.pl'
+
+# SEARCH_URL = 'http://www.matrixscience.com/cgi/nph-mascot.exe?1'
+# DAT_URL = 'http://www.matrixscience.com/cgi/export_dat_2.pl'
 
 #holder for stdout from exec
 out = ''
@@ -143,7 +145,7 @@ begin
     
     # post
     body = ''
-    RestClient.post (SEARCH_URL, mascotparams) { |response| body = response.to_s }
+    RestClient.post(SEARCH_URL, mascotparams) { |response| body = response.to_s }
     
     #finally write body to output file to 
     mascotout.write(body)
@@ -159,22 +161,35 @@ begin
       pa = $1.split('/')
       date_dir = pa[pa.length-2]
 
-      out += "Fetching #{$1} from mascot serverv and renaming\n"
+      out += "Fetching #{$1} from mascot server and renaming\n"
       
-      fetch_hash = { 'do_export' => '1',
-        'export_format' => 'MascotDAT',
-        'file'=> "../data/#{date_dir}/#{dat_basename}"
-      }
+      fetch_hash = {}
+      fetch_hash['do_export'] = '1'
+      fetch_hash['export_format'] = 'MascotDAT'
+      fetch_hash['file'] = "../data/#{date_dir}/#{dat_basename}"
+
+      outfile = File.open("#{File.basename(infile,'.mgf')}.dat","w+")
       
-      RestClient.post(DAT_URL, fetch_hash) { |res|
+      if DAT_URL =~ /bioinf/
       
-        out += res.to_s
-        File.open("#{File.basename(infile,'.mgf')}.dat","w+") {|f| f.write res.to_s }
+        # workaround!
+        c = Curl::Easy.http_get "#{DAT_URL}&DateDir=#{date_dir}&ResJob=#{dat_basename}"
+        outfile.write c.body_str
+        outfile.write "\n"
+        # out += c.body_str
         
-      }
+      else
+            
+        RestClient.get(DAT_URL, fetch_hash) { |res|
       
-      # out += `curl -O #{File.basename(infile,'.mgf')}.dat #{DAT_URL}&do_export=1&export_format=MascotDAT&file=../data/#{date_dir}/#{dat_basename} `
-      # out += `mv -v #{dat_basename} #{File.basename(infile,'.mgf')}.dat`
+          out += res.to_s
+          outfile.write res.to_s
+        
+        }
+      
+      end
+      
+      outfile.close
       outputs << "#{File.basename(infile,'.mgf')}.dat"
 
     else
