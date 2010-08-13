@@ -13,15 +13,13 @@ require 'rubygems'
 require 'optparse'
 require 'json'
 require 'restclient'
-require 'curb'
 
 #mgf command to execute if necessary
 MGF_CMD = '/opt/pwiz/msconvert --mgf'
 
 # URLs 
- SEARCH_URL = 'http://bioinf.itmat.upenn.edu/mascot/cgi/nph-mascot.exe?1'
- DAT_URL = 'http://bioinf.itmat.upenn.edu/mascot/x-cgi/ms-status.exe?Autorefresh=false&Show=RESULTFILE&BrowserSafe=false'
-
+SEARCH_URL = 'http://bioinf.itmat.upenn.edu/mascot/cgi/nph-mascot.exe?1'
+DAT_URL = 'http://bioinf.itmat.upenn.edu/mascotdata'
 
 # SEARCH_URL = 'http://www.matrixscience.com/cgi/nph-mascot.exe?1'
 # DAT_URL = 'http://www.matrixscience.com/cgi/export_dat_2.pl'
@@ -171,21 +169,12 @@ begin
       outfile = File.open("#{File.basename(infile,'.mgf')}.dat","w+")
       
       if DAT_URL =~ /bioinf/
-      
-        # workaround!
-        c = Curl::Easy.http_get "#{DAT_URL}&DateDir=#{date_dir}&ResJob=#{dat_basename}"
-        outfile.write c.body_str
-        outfile.write "\n"
-        # out += c.body_str
-        
+
+        RestClient.get("#{DAT_URL}/#{date_dir}/#{dat_basename}") { |res| outfile.write res.to_s }
+
       else
             
-        RestClient.get(DAT_URL, fetch_hash) { |res|
-      
-          out += res.to_s
-          outfile.write res.to_s
-        
-        }
+        RestClient.get(DAT_URL, fetch_hash) { |res| outfile.write res.to_s }
       
       end
       
