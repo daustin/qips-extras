@@ -18,11 +18,14 @@ require 'restclient'
 MGF_CMD = '/opt/pwiz/msconvert --mgf'
 
 # URLs 
-SEARCH_URL = 'http://bioinf.itmat.upenn.edu/mascot/cgi/nph-mascot.exe?1'
-DAT_URL = 'http://bioinf.itmat.upenn.edu/mascotdata'
+# SEARCH_URL = 'http://bioinf.itmat.upenn.edu/mascot/cgi/nph-mascot.exe?1'
+# DAT_URL = 'http://bioinf.itmat.upenn.edu/mascotdata'
 
 # SEARCH_URL = 'http://www.matrixscience.com/cgi/nph-mascot.exe?1'
 # DAT_URL = 'http://www.matrixscience.com/cgi/export_dat_2.pl'
+
+SEARCH_URL = 'http://184.73.197.119/mascot/cgi/nph-mascot.exe?1'
+DAT_URL = 'http://184.73.197.119/mascot/cgi/export_dat_2.pl'
 
 #holder for stdout from exec
 out = ''
@@ -161,10 +164,8 @@ begin
 
       out += "Fetching #{$1} from mascot server and renaming\n"
       
-      fetch_hash = {}
-      fetch_hash['do_export'] = '1'
-      fetch_hash['export_format'] = 'MascotDAT'
-      fetch_hash['file'] = "../data/#{date_dir}/#{dat_basename}"
+      fetch_hash = { :do_export => 1, :prot_hit_num => 1, :prot_acc => 1, :pep_query => 1, :pep_rank => 1, :pep_isbold => 1, :pep_isunique => 1, :pep_exp_mz => 1, :export_format => 'MascotDAT' }
+      fetch_hash[:file] = "../data/#{date_dir}/#{dat_basename}"
 
       outfile = File.open("#{File.basename(infile,'.mgf')}.dat","w+")
       
@@ -173,8 +174,9 @@ begin
         RestClient.get("#{DAT_URL}/#{date_dir}/#{dat_basename}") { |res| outfile.write res.to_s }
 
       else
-            
-        RestClient.get(DAT_URL, fetch_hash) { |res| outfile.write res.to_s }
+        
+        puts fetch_hash.inspect    
+        RestClient.post(DAT_URL, fetch_hash) { |res| outfile.write res.to_s }
       
       end
       
