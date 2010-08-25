@@ -3,7 +3,7 @@ require 'rake'
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |gemspec|
-    gemspec.name = "qips-node-extras"
+    gemspec.name = "qips-extras"
     gemspec.summary = "Extra scripts for QIPS worker node"
     gemspec.email = "daustin@mail.med.upenn.edu"
     gemspec.homepage = "http://github.com/daustin/qips-extras"
