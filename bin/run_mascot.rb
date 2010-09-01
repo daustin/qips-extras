@@ -174,8 +174,7 @@ begin
         RestClient.get("#{DAT_URL}/#{date_dir}/#{dat_basename}") { |res| outfile.write res.to_s }
 
       else
-        
-        puts fetch_hash.inspect    
+      
         RestClient.post(DAT_URL, fetch_hash) { |res| outfile.write res.to_s }
       
       end
