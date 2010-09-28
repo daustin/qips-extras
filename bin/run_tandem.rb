@@ -16,7 +16,7 @@ require 'json'
 require 'erubis'
 
 #command to execute
-CMD = '/opt/tandem/bin/tandem'
+CMD = '/usr/local/apps/tpp/bin/tandem.exe'
 INPUT_XML_FILE = 'input.xml'
 
 #holder for stdout from exec
@@ -34,6 +34,14 @@ OptionParser.new do |opts|
 
   opts.on("--taxon=MANDATORY", "--taxon MANDATORY", "Taxon") do |v|
     options[:taxon] = v
+  end
+  
+  opts.on("--taxon_file=MANDATORY", "--taxon_file MANDATORY", "Taxon File") do |v|
+    options[:taxon_file] = v
+  end
+  
+  opts.on("--params_file=MANDATORY", "--params_file MANDATORY", "Params File") do |v|
+    options[:params_file] = v
   end
   
    opts.on("--input_files=MANDATORY", "--input_fies MANDATORY", "Input Files") do |v|
@@ -58,6 +66,12 @@ begin
 
 
   out += "Using Taxon: #{options[:taxon]}\n"
+  
+  params_file = options[:params_file] ||= 'default_input.xml'
+  taxon_file = options[:taxon_file] ||= 'taxonomy.xml'
+  out += "Using Params File: #{params_file}\n"
+  out += "Using Taxon File: #{taxon_file}\n"
+  
   out += "Searching #{options[:input_files].split(',').size} input files...\n"
   
   # FIRST GENERATE input.xml file
@@ -67,8 +81,8 @@ begin
 
   input_xml_template += "<bioml>\n"
 
-  input_xml_template += "<note type=\"input\" label=\"list path, default parameters\">default_input.xml</note>\n"
-  input_xml_template += "<note type=\"input\" label=\"list path, taxonomy information\">taxonomy.xml</note>\n"
+  input_xml_template += "<note type=\"input\" label=\"list path, default parameters\">#{params_file}</note>\n"
+  input_xml_template += "<note type=\"input\" label=\"list path, taxonomy information\">#{taxon_file}</note>\n"
   input_xml_template += "<note type=\"input\" label=\"protein, taxon\">#{options[:taxon]}</note>\n"
   
   #loop through each input file

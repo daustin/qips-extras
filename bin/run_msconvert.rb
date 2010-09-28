@@ -13,7 +13,7 @@ require 'optparse'
 require 'json' 
 
 #command to execute
-CMD = '/opt/pwiz/msconvert --mgf'
+CMD = 'wmsconvert --mgf'
 
 #holder for stdout from exec
 out = ''

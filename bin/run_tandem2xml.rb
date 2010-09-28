@@ -13,7 +13,7 @@ require 'optparse'
 require 'json' 
 
 #command to execute
-CMD = '/opt/tpp/bin/Tandem2XML'
+CMD = '/usr/local/apps/tpp/bin/Tandem2XML'
 VALID_MATCH='\.xml'
 
 #holder for stdout from exec

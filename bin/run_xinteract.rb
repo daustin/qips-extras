@@ -14,8 +14,8 @@ require 'json'
 require 'erubis'
 
 #command to execute
-CMD = '/opt/tpp/bin/xinteract'
-TPP_PATH = '/opt/tpp/bin'
+CMD = '/usr/local/apps/tpp/bin/xinteract'
+TPP_PATH = '/usr/local/apps/tpp/bin'
 
 #holder for stdout from exec
 out = ''

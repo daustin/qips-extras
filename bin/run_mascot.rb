@@ -15,7 +15,7 @@ require 'json'
 require 'restclient'
 
 #mgf command to execute if necessary
-MGF_CMD = '/opt/pwiz/msconvert --mgf'
+MGF_CMD = 'wmsconvert --mgf'
 
 # URLs 
 # SEARCH_URL = 'http://bioinf.itmat.upenn.edu/mascot/cgi/nph-mascot.exe?1'

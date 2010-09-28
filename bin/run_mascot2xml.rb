@@ -13,7 +13,7 @@ require 'optparse'
 require 'json' 
 
 #command to execute
-CMD = '/opt/tpp/bin/Mascot2XML'
+CMD = '/usr/local/apps/tpp/bin/Mascot2XML'
 VALID_MATCH='\.dat'
 
 #holder for stdout from exec
