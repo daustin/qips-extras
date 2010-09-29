@@ -50,11 +50,15 @@ begin
   #   this way anything that goes wrong is caught and passed back to qips-node daemon
   #
   
-  out += "Updating Path"
+  out += "Updating Path\n"
   `export PATH=$PATH:#{TPP_PATH}`
   out += "Analysing files...\n"
-  out += "Running: #{CMD} #{other_args.join(' ')} #{input_files.split(',').join(' ')}\n"
-  out += `#{CMD} #{other_args.join(' ')} #{input_files.split(',').join(' ')} 2> temp.err` #redirects to output file, and redirects error
+  
+  #filter only xml inputs
+  inputs_array = input_files.split(',').select{ |v| File.extname(v) == '.xml' }
+  
+  out += "Running: #{CMD} #{other_args.join(' ')} #{inputs_array.join(' ')}\n"
+  out += `#{CMD} #{other_args.join(' ')} #{inputs_array.join(' ')} 2> temp.err` #redirects to output file, and redirects error
   out += "\n--------FROM STDERR---------\n"
   out += "#{$?}: " + `cat temp.err` + "\n" unless $?.to_i == 0 # $? is a special var for error code of process
 
