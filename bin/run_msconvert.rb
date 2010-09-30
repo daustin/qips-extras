@@ -13,7 +13,7 @@ require 'optparse'
 require 'json' 
 
 #command to execute
-CMD = 'wmsconvert --mgf'
+CMD = '/usr/local/apps/tpp/bin/msconvert'
 
 #holder for stdout from exec
 out = ''
@@ -26,6 +26,10 @@ options = {}
 
 OptionParser.new do |opts|
   opts.banner = "Usage: run_msconvert.rb [options]"
+  
+  opts.on("--output_format=MANDATORY", "--output_format MANDATORY", "Output Format") do |v|
+    options[:output_format] = v
+  end
   
   opts.on("--input_files=MANDATORY", "--input_files MANDATORY", "Input Files") do |v|
     options[:input_files] = v
@@ -48,12 +52,12 @@ begin
 
   options[:input_files].split(',').each do |f|
     #each basename
-    
+    output_format = options[:output_format] ||= 'mgf'
     out += "Converting #{f}...\n"
-    out += `#{CMD} #{f} 2> temp.err` #redirects error
+    out += `#{CMD} --#{output_format} #{f} 2> temp.err` #redirects error
     
     temp = f.chomp(File.extname(f))
-    temp += ".mgf"
+    temp += ".#{output_format}"
     outputs << "#{temp}"
 
     error += "#{$?}: " + `cat temp.err` + "\n" unless $?.to_i == 0 # $? is a special var for error code of process

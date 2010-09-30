@@ -4,7 +4,7 @@
 ##
 #    David Austin @ UPENN
 #    runs mascot search for given input file(s)
-#    accepts mzML, mzXML, or mgf files
+#    accepts mgf files
 #    --input_files='file1,file2'
 #    --taxonomy=human
 #
@@ -13,9 +13,6 @@ require 'rubygems'
 require 'optparse'
 require 'json'
 require 'restclient'
-
-#mgf command to execute if necessary
-MGF_CMD = 'wmsconvert --mgf'
 
 # URLs 
 # SEARCH_URL = 'http://bioinf.itmat.upenn.edu/mascot/cgi/nph-mascot.exe?1'
@@ -125,18 +122,8 @@ begin
 
   options[:input_files].split(',').each do |f|
     out += "Processing #{f}..."
-    infile = ''
+    infile = f
 
-    if f =~ /(\.mzXML)/i || f =~ /(\.mzML)/i
-      # convert first!
-      out += "Converting #{f} first\n"
-      out += `#{MGF_CMD} #{f}`
-      infile = "#{File.basename(f, $1)}.mgf"
-      
-    else  
-      infile = f
-    end
-    
     # out html from mascot server
     mascotout = File.open("MASCOT_#{File.basename(infile,'.mgf')}.html", "w+")
 
