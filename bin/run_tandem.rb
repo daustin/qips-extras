@@ -5,8 +5,13 @@
 #    David Austin @ UPENN
 #    wrapper for tandem
 #    generates input.xml based on the folling args:
-#    --input_files='file1,file2'
+#    --input_files='file1'
 #    --taxonomy=human
+#    --taxon_file=taxonomy.xml
+#    --params_file=default.xml
+#
+#    NOTE ONLY SEARCHES FIRST INPUT FILE.  RUN AS CONCURRENT!
+#
 #
 
 require 'rubygems'
@@ -87,15 +92,14 @@ begin
   
   #loop through each input file
 
-  options[:input_files].split(',').each do |f|
-
-    if f =~ /\.mgf/
-      input_xml_template += "<note type=\"input\" label=\"spectrum, path\">#{f}</note>\n"
-    end
-    
+  infile = options[:input_files].split(',')[0]
+  outfile = ''
+  if infile =~ /\.mgf/
+    outfile = "#{File.basename(f,'.mgf')}.xml"
+    input_xml_template += "<note type=\"input\" label=\"spectrum, path\">#{f}</note>\n"
+    input_xml_template += "<note type=\"input\" label=\"output, path\">#{outfile}</note>\n"
   end
-
-  input_xml_template += "<note type=\"input\" label=\"output, path\">output.xml</note>\n"
+  
   input_xml_template += "</bioml>\n"
 
   #now write to xml file
@@ -107,11 +111,12 @@ begin
   error += "#{$?}: " + `cat temp.err` + "\n" unless $?.to_i == 0 # $? is a special var for error code of process
   # error = "FORCED ERROR" if rand(2) == 1 # uncomment to force an error half the time
 
-  xml_outs = `ls -1 output*.xml`
-  xml_outs.each do |l|
-    outputs << l.strip
+  if File.exist?(outfile)
+    outputs << outfile
+  else
+    error += "Could not find output file: #{outfile}"
+    
   end
-  
 
 rescue Exception => e
 
