@@ -12,4 +12,4 @@ src/*
 .hg/*
 .svn/*
 gems/*
-
+*tgz
